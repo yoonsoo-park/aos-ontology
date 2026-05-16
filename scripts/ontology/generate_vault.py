@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .config import DOMAIN_MAPPING
+from .config import DOMAIN_MAPPING, OBJECT_TIERS
 from .models import SFField, SFObject, SFRelationship
 
 
@@ -115,6 +115,12 @@ def _format_picklist_section(fields: list[SFField]) -> str:
     return "\n".join(lines)
 
 
+_TIER_LOOKUP: dict[str, int] = {}
+for _tier, _objects in OBJECT_TIERS.items():
+    for _obj_name in _objects:
+        _TIER_LOOKUP[_obj_name] = _tier
+
+
 def generate_entity_note(obj: SFObject, objects: dict[str, SFObject]) -> str:
     domain = DOMAIN_MAPPING.get(obj.api_name, "uncategorized")
     key_fields = _key_fields(obj)
@@ -123,7 +129,7 @@ def generate_entity_note(obj: SFObject, objects: dict[str, SFObject]) -> str:
         "api_name": obj.api_name,
         "label": obj.clean_label,
         "namespace": obj.namespace or "standard",
-        "tier": 1,
+        "tier": _TIER_LOOKUP.get(obj.api_name, 0),
         "domain": domain,
         "source_system": "salesforce",
         "source_provider": "salesforce-api",
@@ -248,7 +254,7 @@ def write_vault(objects: dict[str, SFObject], output_dir: Path) -> dict[str, int
         f"- **Generated at:** {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}\n"
         f"- **Source:** Demo-Master orgMetadata\n"
         f"- **Objects:** {len(objects)}\n"
-        f"- **Scope:** Tier 1 (core banking entities)\n"
+        f"- **Scope:** Up to Tier {max((_TIER_LOOKUP.get(api, 0) for api in objects), default=1)}\n"
         f"- **Completeness:** Standard nCino package schema only. No customer-specific customizations.\n"
     )
     (meta_dir / "source-provenance.md").write_text(provenance, encoding="utf-8")

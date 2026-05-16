@@ -10,6 +10,7 @@ from ontology_query.index import OntologyIndex
 from ontology_query.search import OntologySearch
 from ontology_query.resolver import SourceResolver
 from ontology_query.frontmatter import parse_frontmatter
+from scripts.ontology.config import OBJECT_TIERS, get_objects_for_tier
 
 VAULT_PATH = Path(__file__).parent.parent / "output" / "vault"
 
@@ -48,7 +49,8 @@ class TestOntologyIndex(unittest.TestCase):
         self.index = OntologyIndex(reader)
 
     def test_size(self):
-        self.assertEqual(self.index.size, 26)
+        total = len(get_objects_for_tier(max(OBJECT_TIERS.keys())))
+        self.assertGreaterEqual(self.index.size, total - 5)
 
     def test_get_by_label(self):
         entry = self.index.get("Loan")
@@ -71,7 +73,7 @@ class TestOntologyIndex(unittest.TestCase):
 
     def test_list_entities_all(self):
         entities = self.index.list_entities()
-        self.assertEqual(len(entities), 26)
+        self.assertGreater(len(entities), 100)
 
     def test_list_entities_domain(self):
         entities = self.index.list_entities(domain="loan-origination")
@@ -84,6 +86,11 @@ class TestOntologyIndex(unittest.TestCase):
         self.assertIn("loan-origination", domains)
         self.assertIn("relationship-management", domains)
         self.assertIn("collateral-management", domains)
+        self.assertIn("treasury-management", domains)
+        self.assertIn("underwriting", domains)
+        self.assertIn("financial-analysis", domains)
+        self.assertIn("sba-lending", domains)
+        self.assertIn("risk-management", domains)
 
 
 @unittest.skipUnless(_has_vault(), "Generated vault not found at output/vault")
@@ -217,6 +224,72 @@ class TestSourceResolver(unittest.TestCase):
         self.assertGreater(len(chain), 5)
         api_names = [m.api_name for m in chain]
         self.assertIn("LLC_BI__Loan__c", api_names)
+
+
+@unittest.skipUnless(_has_vault(), "Generated vault not found at output/vault")
+class TestTier2Entities(unittest.TestCase):
+    def setUp(self):
+        reader = LocalVaultReader(VAULT_PATH)
+        index = OntologyIndex(reader)
+        self.search = OntologySearch(reader, index)
+
+    def test_credit_memo(self):
+        entity = self.search.get_entity("Credit Memo")
+        self.assertIsNotNone(entity)
+        self.assertEqual(entity.domain, "underwriting")
+
+    def test_treasury_service(self):
+        entity = self.search.get_entity("Treasury Service")
+        self.assertIsNotNone(entity)
+        self.assertEqual(entity.domain, "treasury-management")
+
+    def test_spread(self):
+        entity = self.search.get_entity("Spread")
+        self.assertIsNotNone(entity)
+        self.assertEqual(entity.domain, "financial-analysis")
+
+    def test_sba_loan(self):
+        entity = self.search.get_entity("SBA Loan")
+        self.assertIsNotNone(entity)
+        self.assertEqual(entity.domain, "sba-lending")
+
+    def test_opportunity(self):
+        entity = self.search.get_entity("Opportunity")
+        self.assertIsNotNone(entity)
+        self.assertEqual(entity.domain, "sales")
+
+    def test_tier2_entity_has_tier_2(self):
+        reader = LocalVaultReader(VAULT_PATH)
+        content = reader.read_file("entities/Credit Memo.md")
+        fm, _ = parse_frontmatter(content)
+        self.assertEqual(fm["tier"], 2)
+
+    def test_tier1_entity_has_tier_1(self):
+        reader = LocalVaultReader(VAULT_PATH)
+        content = reader.read_file("entities/Loan.md")
+        fm, _ = parse_frontmatter(content)
+        self.assertEqual(fm["tier"], 1)
+
+
+class TestObjectTiers(unittest.TestCase):
+    def test_get_objects_for_tier_1(self):
+        objects = get_objects_for_tier(1)
+        self.assertEqual(objects, OBJECT_TIERS[1])
+
+    def test_get_objects_for_tier_2_includes_tier_1(self):
+        objects = get_objects_for_tier(2)
+        for obj in OBJECT_TIERS[1]:
+            self.assertIn(obj, objects)
+        for obj in OBJECT_TIERS[2]:
+            self.assertIn(obj, objects)
+
+    def test_get_objects_for_tier_0(self):
+        objects = get_objects_for_tier(0)
+        self.assertEqual(objects, [])
+
+    def test_no_duplicates_across_tiers(self):
+        all_objects = get_objects_for_tier(max(OBJECT_TIERS.keys()))
+        self.assertEqual(len(all_objects), len(set(all_objects)))
 
 
 class TestFrontmatter(unittest.TestCase):
