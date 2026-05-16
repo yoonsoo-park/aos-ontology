@@ -153,6 +153,46 @@ class TestOntologySearch(unittest.TestCase):
         entity = self.search.get_entity("Loan")
         self.assertIn("Loan Object", entity.description)
 
+    def test_get_relationships_filter_lookup(self):
+        rels = self.search.get_relationships("Loan", direction="child", rel_type="Lookup")
+        self.assertGreater(len(rels), 0)
+        for r in rels:
+            self.assertEqual(r.relationship_type, "Lookup")
+
+    def test_get_relationships_filter_master_detail(self):
+        rels = self.search.get_relationships("Loan", direction="child", rel_type="MasterDetail")
+        self.assertGreater(len(rels), 0)
+        for r in rels:
+            self.assertEqual(r.relationship_type, "MasterDetail")
+
+    def test_get_relationships_filter_case_insensitive(self):
+        rels = self.search.get_relationships("Loan", rel_type="lookup")
+        self.assertGreater(len(rels), 0)
+
+    def test_search_fields_by_name(self):
+        results = self.search.search_fields("Amount")
+        self.assertGreater(len(results), 0)
+        for r in results:
+            self.assertTrue(
+                "amount" in r.field_name.lower() or "amount" in r.field_label.lower()
+            )
+
+    def test_search_fields_by_type(self):
+        results = self.search.search_fields("", field_type="Currency")
+        self.assertGreater(len(results), 0)
+        for r in results:
+            self.assertEqual(r.field_type, "Currency")
+
+    def test_search_fields_by_domain(self):
+        results = self.search.search_fields("", field_type="Currency", domain="loan-origination")
+        self.assertGreater(len(results), 0)
+        for r in results:
+            self.assertEqual(r.domain, "loan-origination")
+
+    def test_search_fields_no_match(self):
+        results = self.search.search_fields("zzz_nonexistent_zzz")
+        self.assertEqual(len(results), 0)
+
 
 @unittest.skipUnless(_has_vault(), "Generated vault not found at output/vault")
 class TestSourceResolver(unittest.TestCase):

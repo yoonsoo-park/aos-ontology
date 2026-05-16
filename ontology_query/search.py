@@ -44,6 +44,16 @@ class EntitySummary:
 
 
 @dataclass
+class FieldResult:
+    entity: str
+    entity_api_name: str
+    field_name: str
+    field_label: str
+    field_type: str
+    domain: str
+
+
+@dataclass
 class TraverseNode:
     entity: str
     api_name: str
@@ -105,7 +115,7 @@ class OntologySearch:
         )
 
     def get_relationships(
-        self, name: str, direction: str = "both"
+        self, name: str, direction: str = "both", rel_type: str | None = None
     ) -> list[RelationshipResult]:
         parsed = self._read_entity(name)
         if not parsed:
@@ -115,10 +125,15 @@ class OntologySearch:
         parents, children = self._parse_relationships(body)
 
         if direction == "parent":
-            return parents
-        if direction == "child":
-            return children
-        return parents + children
+            rels = parents
+        elif direction == "child":
+            rels = children
+        else:
+            rels = parents + children
+
+        if rel_type:
+            rels = [r for r in rels if r.relationship_type.lower() == rel_type.lower()]
+        return rels
 
     def list_domain(self, domain: str) -> list[EntitySummary]:
         return [
@@ -162,6 +177,42 @@ class OntologySearch:
                         queue.append((rel.entity, d + 1))
 
         return result
+
+    def search_fields(
+        self,
+        query: str,
+        field_type: str | None = None,
+        domain: str | None = None,
+    ) -> list[FieldResult]:
+        results: list[FieldResult] = []
+        query_lower = query.lower()
+        entities = self._index.list_entities(domain)
+
+        for entry in entities:
+            parsed = self._read_entity(entry.label)
+            if not parsed:
+                continue
+            fm, _ = parsed
+            for kf in fm.get("key_fields", []):
+                name = kf.get("name", "")
+                label = kf.get("label", "")
+                ftype = kf.get("type", "")
+
+                if field_type and ftype.lower() != field_type.lower():
+                    continue
+                if query_lower and query_lower not in name.lower() and query_lower not in label.lower():
+                    continue
+
+                results.append(FieldResult(
+                    entity=entry.label,
+                    entity_api_name=entry.api_name,
+                    field_name=name,
+                    field_label=label,
+                    field_type=ftype,
+                    domain=entry.domain,
+                ))
+
+        return results
 
     def _parse_relationships(
         self, body: str

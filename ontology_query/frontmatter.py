@@ -91,7 +91,7 @@ def _parse_nested_list(lines: list[str], start: int) -> tuple[list, int]:
                 items.append(_coerce_value(kv))
                 current_item = None
         elif current_item is not None:
-            kv_match = re.match(r"^\s+(\w[\w_]*)\s*:\s*(.*)", stripped)
+            kv_match = re.match(r"^(\w[\w_]*)\s*:\s*(.*)", stripped)
             if kv_match:
                 current_item[kv_match.group(1)] = _coerce_value(kv_match.group(2).strip())
         i += 1
