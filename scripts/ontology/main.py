@@ -10,6 +10,7 @@ from pathlib import Path
 from .config import DEFAULT_METADATA_ROOT, OBJECT_TIERS, TIER_1_OBJECTS, get_objects_for_tier
 from .generate_vault import write_vault
 from .parse_sf_metadata import parse_all_objects
+from .vault_config import VaultConfig
 
 
 def main() -> None:
@@ -43,6 +44,29 @@ def main() -> None:
         default=None,
         help="Generate up to this tier (1, 2, ...). Default: max tier.",
     )
+    parser.add_argument(
+        "--agent",
+        action="store_true",
+        help="Use LLM agent to auto-classify domains and tiers",
+    )
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Use pre-generated vault_config.json (skip agent)",
+    )
+    parser.add_argument(
+        "--context",
+        type=str,
+        default="",
+        help="Context hint for agent (e.g., 'banking/lending SaaS')",
+    )
+    parser.add_argument(
+        "--save-config",
+        type=Path,
+        default=None,
+        help="Save generated config to JSON for review/reuse",
+    )
     args = parser.parse_args()
 
     if not args.metadata_root.exists():
@@ -70,7 +94,26 @@ def main() -> None:
     total_rels = sum(len(o.relationships) for o in objects.values())
     print(f"Total fields: {total_fields}, Total relationships: {total_rels}")
 
-    stats = write_vault(objects, args.output)
+    vault_config: VaultConfig | None = None
+    if args.config:
+        print(f"Loading config from: {args.config}")
+        vault_config = VaultConfig.load(args.config)
+    elif args.agent:
+        from .agent_assist import generate_vault_config
+
+        print("Running agent-assisted config generation...")
+        vault_config = generate_vault_config(
+            objects,
+            context=args.context,
+            existing_domains=None,
+        )
+        print(f"  Agent assigned {len(set(vault_config.domain_mapping.values()))} domains")
+
+    if args.save_config and vault_config:
+        vault_config.save(args.save_config)
+        print(f"Config saved to: {args.save_config}")
+
+    stats = write_vault(objects, args.output, vault_config)
     print(f"\nVault generated at: {args.output}")
     print(f"  Entities: {stats['entities']}")
     print(f"  Domains: {stats['domains']}")

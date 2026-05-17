@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .config import DOMAIN_MAPPING, OBJECT_TIERS
 from .models import SFField, SFObject, SFRelationship
+from .vault_config import VaultConfig
 
 
 def _yaml_dump_simple(data: dict) -> str:
@@ -121,15 +122,21 @@ for _tier, _objects in OBJECT_TIERS.items():
         _TIER_LOOKUP[_obj_name] = _tier
 
 
-def generate_entity_note(obj: SFObject, objects: dict[str, SFObject]) -> str:
-    domain = DOMAIN_MAPPING.get(obj.api_name, "uncategorized")
+def generate_entity_note(obj: SFObject, objects: dict[str, SFObject],
+                         vault_config: VaultConfig | None = None) -> str:
+    if vault_config:
+        domain = vault_config.domain_mapping.get(obj.api_name, "uncategorized")
+        tier = vault_config.tier_ranking.get(obj.api_name, 0)
+    else:
+        domain = DOMAIN_MAPPING.get(obj.api_name, "uncategorized")
+        tier = _TIER_LOOKUP.get(obj.api_name, 0)
     key_fields = _key_fields(obj)
 
     frontmatter = {
         "api_name": obj.api_name,
         "label": obj.clean_label,
         "namespace": obj.namespace or "standard",
-        "tier": _TIER_LOOKUP.get(obj.api_name, 0),
+        "tier": tier,
         "domain": domain,
         "source_system": "salesforce",
         "source_provider": "salesforce-api",
@@ -188,10 +195,12 @@ def generate_entity_note(obj: SFObject, objects: dict[str, SFObject]) -> str:
     return "\n".join(sections) + "\n"
 
 
-def generate_domain_note(domain: str, objects: dict[str, SFObject]) -> str:
+def generate_domain_note(domain: str, objects: dict[str, SFObject],
+                         vault_config: VaultConfig | None = None) -> str:
+    dm = vault_config.domain_mapping if vault_config else DOMAIN_MAPPING
     domain_objects = [
         obj for obj in objects.values()
-        if DOMAIN_MAPPING.get(obj.api_name) == domain
+        if dm.get(obj.api_name) == domain
     ]
     if not domain_objects:
         return ""
@@ -205,13 +214,15 @@ def generate_domain_note(domain: str, objects: dict[str, SFObject]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def generate_index(objects: dict[str, SFObject]) -> str:
+def generate_index(objects: dict[str, SFObject],
+                   vault_config: VaultConfig | None = None) -> str:
+    dm = vault_config.domain_mapping if vault_config else DOMAIN_MAPPING
     index = {}
     for obj in objects.values():
         index[obj.api_name] = {
             "label": obj.clean_label,
             "file": f"entities/{obj.clean_label}.md",
-            "domain": DOMAIN_MAPPING.get(obj.api_name, "uncategorized"),
+            "domain": dm.get(obj.api_name, "uncategorized"),
             "relationships_out": len(obj.relationships),
             "relationships_in": len(obj.incoming_relationships),
             "field_count": len(obj.fields),
@@ -219,7 +230,11 @@ def generate_index(objects: dict[str, SFObject]) -> str:
     return json.dumps(index, indent=2, ensure_ascii=False)
 
 
-def write_vault(objects: dict[str, SFObject], output_dir: Path) -> dict[str, int]:
+def write_vault(objects: dict[str, SFObject], output_dir: Path,
+                vault_config: VaultConfig | None = None) -> dict[str, int]:
+    dm = vault_config.domain_mapping if vault_config else DOMAIN_MAPPING
+    tr = vault_config.tier_ranking if vault_config else _TIER_LOOKUP
+
     entities_dir = output_dir / "entities"
     domains_dir = output_dir / "domains"
     meta_dir = output_dir / "_meta"
@@ -230,33 +245,39 @@ def write_vault(objects: dict[str, SFObject], output_dir: Path) -> dict[str, int
     stats = {"entities": 0, "domains": 0}
 
     for obj in objects.values():
-        note = generate_entity_note(obj, objects)
+        note = generate_entity_note(obj, objects, vault_config)
         filepath = entities_dir / f"{obj.clean_label}.md"
         filepath.write_text(note, encoding="utf-8")
         stats["entities"] += 1
 
     seen_domains: set[str] = set()
     for api_name in objects:
-        domain = DOMAIN_MAPPING.get(api_name)
+        domain = dm.get(api_name)
         if domain and domain not in seen_domains:
             seen_domains.add(domain)
-            note = generate_domain_note(domain, objects)
+            note = generate_domain_note(domain, objects, vault_config)
             if note:
                 filepath = domains_dir / f"{domain}.md"
                 filepath.write_text(note, encoding="utf-8")
                 stats["domains"] += 1
 
-    index_content = generate_index(objects)
+    index_content = generate_index(objects, vault_config)
     (meta_dir / "index.json").write_text(index_content, encoding="utf-8")
 
+    config_source = vault_config.generated_by if vault_config else "hardcoded"
+    max_tier = max((tr.get(api, 0) for api in objects), default=1)
     provenance = (
         f"# Source Provenance\n\n"
         f"- **Generated at:** {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}\n"
         f"- **Source:** Demo-Master orgMetadata\n"
         f"- **Objects:** {len(objects)}\n"
-        f"- **Scope:** Up to Tier {max((_TIER_LOOKUP.get(api, 0) for api in objects), default=1)}\n"
+        f"- **Scope:** Up to Tier {max_tier}\n"
+        f"- **Config:** {config_source}\n"
         f"- **Completeness:** Standard nCino package schema only. No customer-specific customizations.\n"
     )
     (meta_dir / "source-provenance.md").write_text(provenance, encoding="utf-8")
+
+    if vault_config:
+        vault_config.save(meta_dir / "vault_config.json")
 
     return stats
