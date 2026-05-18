@@ -1,0 +1,21 @@
+/* Ontology Explorer Plugin Styles */
+
+.ontology-flow-container {
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  margin: 8px 0 16px 0;
+}
+
+.ontology-bottleneck-card {
+  background: var(--background-secondary);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  border: 1px solid var(--background-modifier-border);
+  transition: border-color 0.15s;
+}
+
+.ontology-bottleneck-card:hover {
+  border-color: var(--interactive-accent);
+}

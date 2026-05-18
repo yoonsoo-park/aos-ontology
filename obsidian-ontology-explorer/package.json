@@ -1,0 +1,21 @@
+{
+  "name": "obsidian-ontology-explorer",
+  "version": "0.1.0",
+  "description": "Obsidian plugin for ontology process flow visualization",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.25.0",
+    "obsidian": "latest",
+    "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "cytoscape": "^3.30.0",
+    "cytoscape-dagre": "^2.5.0",
+    "dagre": "^0.8.5"
+  }
+}

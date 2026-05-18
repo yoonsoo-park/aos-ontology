@@ -4,6 +4,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+import shutil
+
 from .config import DOMAIN_MAPPING, OBJECT_TIERS
 from .models import SFField, SFObject, SFRelationship
 from .vault_config import VaultConfig
@@ -138,6 +140,7 @@ def generate_entity_note(obj: SFObject, objects: dict[str, SFObject],
         "namespace": obj.namespace or "standard",
         "tier": tier,
         "domain": domain,
+        "tags": [domain],
         "source_system": "salesforce",
         "source_provider": "salesforce-api",
         "freshness_sla": "realtime",
@@ -211,6 +214,20 @@ def generate_domain_note(domain: str, objects: dict[str, SFObject],
     for obj in sorted(domain_objects, key=lambda o: o.clean_label):
         desc = f" — {obj.description[:60]}..." if obj.description and len(obj.description) > 60 else (f" — {obj.description}" if obj.description else "")
         lines.append(f"- [[{obj.clean_label}]]{desc}")
+
+    lines.append("")
+    lines.append("## Entity Overview\n")
+    lines.append("```dataview")
+    lines.append("TABLE")
+    lines.append('  relationships_out AS "Parents",')
+    lines.append('  relationships_in AS "Children",')
+    lines.append('  field_count AS "Fields",')
+    lines.append('  namespace AS "Namespace"')
+    lines.append('FROM "entities"')
+    lines.append(f'WHERE domain = "{domain}"')
+    lines.append("SORT relationships_in DESC")
+    lines.append("```")
+
     return "\n".join(lines) + "\n"
 
 
@@ -238,6 +255,10 @@ def write_vault(objects: dict[str, SFObject], output_dir: Path,
     entities_dir = output_dir / "entities"
     domains_dir = output_dir / "domains"
     meta_dir = output_dir / "_meta"
+
+    for d in (entities_dir, domains_dir):
+        if d.exists():
+            shutil.rmtree(d)
 
     for d in (entities_dir, domains_dir, meta_dir):
         d.mkdir(parents=True, exist_ok=True)

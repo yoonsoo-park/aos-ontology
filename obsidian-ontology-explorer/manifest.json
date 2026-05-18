@@ -1,0 +1,9 @@
+{
+  "id": "ontology-explorer",
+  "name": "Ontology Explorer",
+  "version": "0.1.0",
+  "minAppVersion": "1.0.0",
+  "description": "Interactive process flow visualization and bottleneck analysis for nCino ontology vaults.",
+  "author": "nCino GAP Team",
+  "isDesktopOnly": false
+}

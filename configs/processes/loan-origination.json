@@ -1,0 +1,411 @@
+{
+  "name": "Loan Origination",
+  "process_key": "loan-origination",
+  "description": "End-to-end commercial loan origination workflow from qualification through booking, including 3 parallel support stages (Credit, Legal, Product Team).",
+  "domain": "loan-origination",
+  "source_object": "LLC_BI__Loan__c",
+  "stage_field": "LLC_BI__Stage__c",
+  "metrics_source": "synthetic",
+  "stages": [
+    {
+      "name": "Qualification",
+      "stage_key": "qualification",
+      "order": 1,
+      "stage_type": "sequential",
+      "description": "Initial borrower qualification and pre-screening",
+      "predecessors": [],
+      "successors": ["proposal"],
+      "sla_target_days": 2.0,
+      "involved_entities": [
+        {"api_name": "Account", "role": "primary", "relevant_fields": ["Industry", "BillingState", "AnnualRevenue"]},
+        {"api_name": "Contact", "role": "primary", "relevant_fields": ["Email", "Phone"]},
+        {"api_name": "LLC_BI__Application__c", "role": "primary", "relevant_fields": ["LLC_BI__Requested_Amount__c", "nCinoCB__Status__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 1.2, "p50_days": 0.8, "p90_days": 2.5,
+        "entry_count": 1000, "exit_count": 600,
+        "error_rate": 0.03, "rework_rate": 0.02,
+        "sla_met_pct": 0.92,
+        "bottleneck_severity": "none"
+      }
+    },
+    {
+      "name": "Proposal",
+      "stage_key": "proposal",
+      "order": 2,
+      "stage_type": "sequential",
+      "description": "Loan proposal generation and presentation to borrower",
+      "predecessors": ["qualification"],
+      "successors": ["application"],
+      "sla_target_days": 3.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Loan__c", "role": "primary", "relevant_fields": ["LLC_BI__Stage__c", "LLC_BI__Amount__c", "LLC_BI__InterestRate__c"]},
+        {"api_name": "LLC_BI__Product__c", "role": "reference", "relevant_fields": ["Name", "LLC_BI__Product_Line__c"]},
+        {"api_name": "LLC_BI__Product_Package__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c", "LLC_BI__Total_Amount__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 2.0, "p50_days": 1.5, "p90_days": 4.0,
+        "entry_count": 600, "exit_count": 540,
+        "error_rate": 0.04, "rework_rate": 0.05,
+        "sla_met_pct": 0.88,
+        "bottleneck_severity": "low"
+      }
+    },
+    {
+      "name": "Application",
+      "stage_key": "application",
+      "order": 3,
+      "stage_type": "sequential",
+      "description": "Formal loan application submission and data capture",
+      "predecessors": ["proposal"],
+      "successors": ["credit_underwriting"],
+      "sla_target_days": 3.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Application__c", "role": "primary", "relevant_fields": ["LLC_BI__Requested_Amount__c", "nPortal__Status__c"]},
+        {"api_name": "LLC_BI__Legal_Entities__c", "role": "primary", "relevant_fields": ["LLC_BI__Borrower_Type__c", "LLC_BI__Ownership_Percentage__c"]},
+        {"api_name": "LLC_BI__Collateral__c", "role": "reference", "relevant_fields": ["LLC_BI__Collateral_Type__c", "LLC_BI__Appraised_Value__c"]},
+        {"api_name": "LLC_BI__Loan__c", "role": "primary", "relevant_fields": ["LLC_BI__Stage__c", "LLC_BI__Amount__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 2.5, "p50_days": 2.0, "p90_days": 5.0,
+        "entry_count": 540, "exit_count": 510,
+        "error_rate": 0.06, "rework_rate": 0.08,
+        "sla_met_pct": 0.82,
+        "bottleneck_severity": "low"
+      }
+    },
+    {
+      "name": "Credit Underwriting",
+      "stage_key": "credit_underwriting",
+      "order": 4,
+      "stage_type": "sequential",
+      "description": "Credit analysis, financial spreading, risk assessment — PRIMARY BOTTLENECK",
+      "predecessors": ["application"],
+      "successors": ["loan_committee"],
+      "sla_target_days": 5.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Loan__c", "role": "primary", "relevant_fields": ["LLC_BI__Stage__c", "LLC_BI__InterestRate__c"]},
+        {"api_name": "LLC_BI__Credit_Memo__c", "role": "primary", "relevant_fields": ["LLC_BI__Description__c"]},
+        {"api_name": "LLC_BI__Spread__c", "role": "primary", "relevant_fields": ["LLC_BI__Spread_Type__c"]},
+        {"api_name": "LLC_BI__Spread_Statement_Period__c", "role": "primary", "relevant_fields": ["LLC_BI__Period_Start_Date__c", "LLC_BI__Period_End_Date__c"]},
+        {"api_name": "LLC_BI__Scorecard__c", "role": "primary", "relevant_fields": ["LLC_BI__Score__c", "LLC_BI__Status__c"]},
+        {"api_name": "LLC_BI__Credit_Analysis_Summary__c", "role": "primary", "relevant_fields": ["LLC_BI__Total_Debt__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 5.0, "p50_days": 4.0, "p90_days": 10.0,
+        "entry_count": 510, "exit_count": 460,
+        "error_rate": 0.08, "rework_rate": 0.12,
+        "sla_met_pct": 0.65,
+        "bottleneck_severity": "critical"
+      }
+    },
+    {
+      "name": "Loan Committee",
+      "stage_key": "loan_committee",
+      "order": 5,
+      "stage_type": "sequential",
+      "description": "Committee review and approval decision",
+      "predecessors": ["credit_underwriting"],
+      "successors": ["processing"],
+      "sla_target_days": 3.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Loan__c", "role": "primary", "relevant_fields": ["LLC_BI__Stage__c", "LLC_BI__Status__c"]},
+        {"api_name": "LLC_BI__Credit_Decision__c", "role": "primary", "relevant_fields": ["LLC_BI__Decision__c", "LLC_BI__Decision_Date__c"]},
+        {"api_name": "LLC_BI__Policy_Exception__c", "role": "reference", "relevant_fields": ["LLC_BI__Status__c", "LLC_BI__Exception_Type__c"]},
+        {"api_name": "LLC_BI__LoanTeam__c", "role": "reference", "relevant_fields": ["LLC_BI__User__c", "LLC_BI__Role__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 2.0, "p50_days": 1.5, "p90_days": 4.0,
+        "entry_count": 460, "exit_count": 430,
+        "error_rate": 0.02, "rework_rate": 0.06,
+        "sla_met_pct": 0.85,
+        "bottleneck_severity": "low"
+      }
+    },
+    {
+      "name": "Processing",
+      "stage_key": "processing",
+      "order": 6,
+      "stage_type": "sequential",
+      "description": "Loan processing, condition clearing, verification",
+      "predecessors": ["loan_committee"],
+      "successors": ["doc_prep"],
+      "sla_target_days": 4.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Loan__c", "role": "primary", "relevant_fields": ["LLC_BI__Stage__c"]},
+        {"api_name": "LLC_BI__Requirement__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c", "LLC_BI__Due_Date__c"]},
+        {"api_name": "LLC_BI__Checklist__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c", "LLC_BI__Expected_Duration_Days__c"]},
+        {"api_name": "LLC_BI__Collateral_Valuation__c", "role": "reference", "relevant_fields": ["LLC_BI__Value__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 3.0, "p50_days": 2.5, "p90_days": 6.0,
+        "entry_count": 430, "exit_count": 415,
+        "error_rate": 0.05, "rework_rate": 0.07,
+        "sla_met_pct": 0.78,
+        "bottleneck_severity": "medium"
+      }
+    },
+    {
+      "name": "Doc Prep",
+      "stage_key": "doc_prep",
+      "order": 7,
+      "stage_type": "sequential",
+      "description": "Document preparation and generation — moderate bottleneck from manual work",
+      "predecessors": ["processing"],
+      "successors": ["doc_review"],
+      "sla_target_days": 3.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__LLC_LoanDocument__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c"]},
+        {"api_name": "LLC_BI__DocType__c", "role": "reference", "relevant_fields": ["Name"]},
+        {"api_name": "LLC_BI__Document_Placeholder__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c"]},
+        {"api_name": "LLC_BI__DocInfo__c", "role": "reference", "relevant_fields": ["LLC_BI__Category__c"]},
+        {"api_name": "LLC_BI__ClosingDocument__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 3.0, "p50_days": 2.5, "p90_days": 5.5,
+        "entry_count": 415, "exit_count": 405,
+        "error_rate": 0.07, "rework_rate": 0.10,
+        "sla_met_pct": 0.72,
+        "bottleneck_severity": "high"
+      }
+    },
+    {
+      "name": "Doc Review",
+      "stage_key": "doc_review",
+      "order": 8,
+      "stage_type": "sequential",
+      "description": "Document review and quality check before signing",
+      "predecessors": ["doc_prep"],
+      "successors": ["closing"],
+      "sla_target_days": 2.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__LLC_LoanDocument__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c"]},
+        {"api_name": "LLC_BI__ClosingChecklist__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c"]},
+        {"api_name": "LLC_BI__DocuSign_Envelope__c", "role": "reference", "relevant_fields": ["LLC_BI__Status__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 1.5, "p50_days": 1.0, "p90_days": 3.0,
+        "entry_count": 405, "exit_count": 398,
+        "error_rate": 0.04, "rework_rate": 0.06,
+        "sla_met_pct": 0.84,
+        "bottleneck_severity": "low"
+      }
+    },
+    {
+      "name": "Closing",
+      "stage_key": "closing",
+      "order": 9,
+      "stage_type": "sequential",
+      "description": "Loan closing, signing, and initial funding",
+      "predecessors": ["doc_review"],
+      "successors": ["compliance"],
+      "sla_target_days": 3.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Loan__c", "role": "primary", "relevant_fields": ["LLC_BI__Stage__c", "LLC_BI__CloseDate__c"]},
+        {"api_name": "LLC_BI__ClosingChecklist__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c"]},
+        {"api_name": "LLC_BI__ClosingDocument__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c"]},
+        {"api_name": "LLC_BI__Fee__c", "role": "reference", "relevant_fields": ["LLC_BI__Amount__c", "LLC_BI__Fee_Type__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 2.0, "p50_days": 1.5, "p90_days": 3.5,
+        "entry_count": 398, "exit_count": 390,
+        "error_rate": 0.03, "rework_rate": 0.04,
+        "sla_met_pct": 0.90,
+        "bottleneck_severity": "none"
+      }
+    },
+    {
+      "name": "Compliance",
+      "stage_key": "compliance",
+      "order": 10,
+      "stage_type": "sequential",
+      "description": "Regulatory compliance review — SECONDARY BOTTLENECK (high error/rework)",
+      "predecessors": ["closing"],
+      "successors": ["closed_funded"],
+      "sla_target_days": 4.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Entity_Compliance__c", "role": "primary", "relevant_fields": ["LLC_BI__HMDA_Application_Date__c"]},
+        {"api_name": "LLC_BI__Relationship_Compliance__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c", "LLC_BI__CRA_Purpose__c"]},
+        {"api_name": "LLC_BI__Checklist__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c"]},
+        {"api_name": "LLC_BI__Requirement__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c", "LLC_BI__Hard_Stop__c"]},
+        {"api_name": "LLC_BI__Loan_Compliance__c", "role": "primary", "relevant_fields": ["LLC_BI__HMDA_Action_Taken__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 3.5, "p50_days": 2.5, "p90_days": 7.0,
+        "entry_count": 390, "exit_count": 370,
+        "error_rate": 0.15, "rework_rate": 0.18,
+        "sla_met_pct": 0.68,
+        "bottleneck_severity": "high"
+      }
+    },
+    {
+      "name": "Closed Funded",
+      "stage_key": "closed_funded",
+      "order": 11,
+      "stage_type": "sequential",
+      "description": "Loan is closed and funded, ready for booking",
+      "predecessors": ["compliance"],
+      "successors": ["booked"],
+      "sla_target_days": 1.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Loan__c", "role": "primary", "relevant_fields": ["LLC_BI__Stage__c", "LLC_BI__Status__c"]},
+        {"api_name": "LLC_BI__Automated_Booking_Status__c", "role": "reference", "relevant_fields": ["LLC_BI__Status_Code__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 1.0, "p50_days": 0.5, "p90_days": 2.0,
+        "entry_count": 370, "exit_count": 368,
+        "error_rate": 0.02, "rework_rate": 0.01,
+        "sla_met_pct": 0.95,
+        "bottleneck_severity": "none"
+      }
+    },
+    {
+      "name": "Booked",
+      "stage_key": "booked",
+      "order": 12,
+      "stage_type": "sequential",
+      "description": "Loan booked to core banking system",
+      "predecessors": ["closed_funded"],
+      "successors": ["servicing"],
+      "sla_target_days": 1.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Loan__c", "role": "primary", "relevant_fields": ["LLC_BI__Stage__c", "LLC_BI__Booked_Date__c"]},
+        {"api_name": "LLC_BI__Automated_Booking_Status__c", "role": "primary", "relevant_fields": ["LLC_BI__Status_Code__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 0.5, "p50_days": 0.3, "p90_days": 1.0,
+        "entry_count": 368, "exit_count": 367,
+        "error_rate": 0.01, "rework_rate": 0.01,
+        "sla_met_pct": 0.97,
+        "bottleneck_severity": "none"
+      }
+    },
+    {
+      "name": "Servicing",
+      "stage_key": "servicing",
+      "order": 13,
+      "stage_type": "post_close",
+      "description": "Ongoing loan servicing and payment management",
+      "predecessors": ["booked"],
+      "successors": ["complete"],
+      "sla_target_days": 0.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Loan__c", "role": "primary", "relevant_fields": ["LLC_BI__Stage__c"]},
+        {"api_name": "LLC_BI__Service_Mgmt__c", "role": "primary", "relevant_fields": ["LLC_BI__Status__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 0.0, "p50_days": 0.0, "p90_days": 0.0,
+        "entry_count": 367, "exit_count": 367,
+        "error_rate": 0.02, "rework_rate": 0.01,
+        "sla_met_pct": 0.99,
+        "bottleneck_severity": "none"
+      }
+    },
+    {
+      "name": "Special Assets",
+      "stage_key": "special_assets",
+      "order": 14,
+      "stage_type": "post_close",
+      "description": "Troubled loan workout and special asset management",
+      "predecessors": ["servicing"],
+      "successors": ["complete"],
+      "sla_target_days": 45.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Loan__c", "role": "primary", "relevant_fields": ["LLC_BI__Stage__c"]},
+        {"api_name": "LLC_BI__Loan_Risk_Review__c", "role": "primary", "relevant_fields": ["LLC_BI__Review_Date__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 30.0, "p50_days": 20.0, "p90_days": 60.0,
+        "entry_count": 25, "exit_count": 20,
+        "error_rate": 0.05, "rework_rate": 0.08,
+        "sla_met_pct": 0.75,
+        "bottleneck_severity": "none"
+      }
+    },
+    {
+      "name": "Complete",
+      "stage_key": "complete",
+      "order": 15,
+      "stage_type": "post_close",
+      "description": "Loan fully paid off or matured",
+      "predecessors": ["servicing", "special_assets"],
+      "successors": [],
+      "sla_target_days": 0.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Loan__c", "role": "primary", "relevant_fields": ["LLC_BI__Stage__c", "LLC_BI__Status__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 0.0, "p50_days": 0.0, "p90_days": 0.0,
+        "entry_count": 350, "exit_count": 350,
+        "error_rate": 0.0, "rework_rate": 0.0,
+        "sla_met_pct": 1.0,
+        "bottleneck_severity": "none"
+      }
+    },
+    {
+      "name": "Credit",
+      "stage_key": "credit_support",
+      "order": 16,
+      "stage_type": "parallel",
+      "description": "Support stage: credit team review (parallel to main flow)",
+      "predecessors": ["application"],
+      "successors": ["credit_underwriting"],
+      "sla_target_days": 4.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Credit_Memo__c", "role": "primary", "relevant_fields": ["LLC_BI__Description__c"]},
+        {"api_name": "LLC_BI__Credit_Report__c", "role": "primary", "relevant_fields": []}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 3.0, "p50_days": 2.0, "p90_days": 6.0,
+        "entry_count": 200, "exit_count": 195,
+        "error_rate": 0.04, "rework_rate": 0.05,
+        "sla_met_pct": 0.80,
+        "bottleneck_severity": "low"
+      }
+    },
+    {
+      "name": "Legal",
+      "stage_key": "legal_support",
+      "order": 17,
+      "stage_type": "parallel",
+      "description": "Support stage: legal review (parallel to main flow)",
+      "predecessors": ["processing"],
+      "successors": ["doc_prep"],
+      "sla_target_days": 5.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Loan__c", "role": "primary", "relevant_fields": ["LLC_BI__Stage__c"]},
+        {"api_name": "LLC_BI__Lien__c", "role": "primary", "relevant_fields": ["LLC_BI__Lien_Position__c"]},
+        {"api_name": "LLC_BI__LLC_LoanDocument__c", "role": "reference", "relevant_fields": ["LLC_BI__Status__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 4.0, "p50_days": 3.0, "p90_days": 8.0,
+        "entry_count": 150, "exit_count": 148,
+        "error_rate": 0.03, "rework_rate": 0.04,
+        "sla_met_pct": 0.82,
+        "bottleneck_severity": "medium"
+      }
+    },
+    {
+      "name": "Product Team",
+      "stage_key": "product_team_support",
+      "order": 18,
+      "stage_type": "parallel",
+      "description": "Support stage: product team configuration and exception handling",
+      "predecessors": ["proposal"],
+      "successors": ["processing"],
+      "sla_target_days": 3.0,
+      "involved_entities": [
+        {"api_name": "LLC_BI__Product__c", "role": "primary", "relevant_fields": ["Name", "LLC_BI__Product_Type__c"]},
+        {"api_name": "LLC_BI__Product_Feature__c", "role": "primary", "relevant_fields": ["LLC_BI__Feature_Name__c"]},
+        {"api_name": "LLC_BI__Stage_Configuration__c", "role": "reference", "relevant_fields": ["LLC_BI__Order__c"]}
+      ],
+      "synthetic_metrics": {
+        "avg_days": 2.5, "p50_days": 2.0, "p90_days": 5.0,
+        "entry_count": 80, "exit_count": 78,
+        "error_rate": 0.02, "rework_rate": 0.03,
+        "sla_met_pct": 0.85,
+        "bottleneck_severity": "none"
+      }
+    }
+  ]
+}
