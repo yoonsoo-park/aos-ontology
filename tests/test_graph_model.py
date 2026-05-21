@@ -174,8 +174,8 @@ class TestGraphBuilder(unittest.TestCase):
         graph = build_graph(objects, configs)
         processes = graph.nodes_by_type(NodeType.PROCESS)
         stages = graph.nodes_by_type(NodeType.STAGE)
-        self.assertEqual(len(processes), 1)
-        self.assertEqual(len(stages), 18)
+        self.assertEqual(len(processes), len(configs))
+        self.assertGreaterEqual(len(stages), 18)
 
     def test_builds_stage_transitions(self):
         objects = _make_test_objects()
@@ -198,15 +198,17 @@ class TestGraphBuilder(unittest.TestCase):
         configs = load_all_process_configs(CONFIGS_DIR)
         graph = build_graph(objects, configs)
         contains = graph.edges_by_type(EdgeType.PROCESS_CONTAINS)
-        self.assertEqual(len(contains), 18)
+        total_stages = sum(len(c.stages) for c in configs.values())
+        self.assertEqual(len(contains), total_stages)
 
     def test_metadata_counts(self):
         objects = _make_test_objects()
         configs = load_all_process_configs(CONFIGS_DIR)
         graph = build_graph(objects, configs)
         self.assertEqual(graph.metadata["entity_count"], 2)
-        self.assertEqual(graph.metadata["process_count"], 1)
-        self.assertEqual(graph.metadata["stage_count"], 18)
+        self.assertEqual(graph.metadata["process_count"], len(configs))
+        total_stages = sum(len(c.stages) for c in configs.values())
+        self.assertEqual(graph.metadata["stage_count"], total_stages)
 
 
 # --- Graph Serialization ---
@@ -235,7 +237,7 @@ class TestGenerateGraph(unittest.TestCase):
             stats = write_graph(graph, Path(tmpdir),
                                 metrics_adapter=adapter,
                                 process_keys=list(configs.keys()))
-            self.assertEqual(stats["metrics_files"], 1)
+            self.assertEqual(stats["metrics_files"], len(configs))
             metrics_path = Path(tmpdir) / "_meta" / "metrics" / "loan-origination.json"
             self.assertTrue(metrics_path.exists())
             data = json.loads(metrics_path.read_text())
