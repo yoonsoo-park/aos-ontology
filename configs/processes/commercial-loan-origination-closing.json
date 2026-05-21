@@ -1,0 +1,727 @@
+{
+  "name": "Commercial Loan Origination and Closing",
+  "process_key": "commercial-loan-origination-closing",
+  "description": "End-to-end commercial banking loan origination, closing checklist, and post-close workflow covering qualification through booking and completion.",
+  "domain": "loan-origination",
+  "source_object": "LLC_BI__ClosingChecklist__c",
+  "stage_field": "NDOC__neededByStage__c",
+  "metrics_source": "synthetic",
+  "stages": [
+    {
+      "name": "Qualification / Application",
+      "stage_key": "qualification_application",
+      "order": 1,
+      "stage_type": "sequential",
+      "description": "Initial borrower qualification, pre-screening, and loan application intake. Documents required at this stage establish borrower identity, business structure, and preliminary financial standing.",
+      "predecessors": [],
+      "successors": [
+        "underwriting"
+      ],
+      "sla_target_days": 3.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__ClosingChecklist__c",
+          "role": "primary",
+          "relevant_fields": [
+            "Criteria__c",
+            "Approval_Roles__c",
+            "CCL_Auto_Spread_FormType__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Loan__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Amount_Applied_For__c",
+            "LLC_BI__Action_for_Loan__c",
+            "LLC_BI__Amortization__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Legal_Entities__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Credit_Pull_Authorized_by_Customer__c",
+            "LLC_BI__Joint_Intent_Acknowledged_by_Customer__c",
+            "LLC_BI__Borrower_Analysis__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Requirement__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Action__c",
+            "LLC_BI__Assigned_Party__c",
+            "LLC_BI__Days_until_Due_Date__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Checklist__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Context_Type__c",
+            "LLC_BI__Category__c",
+            "LLC_BI__Is_Template__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 2.8,
+        "p50_days": 2.2,
+        "p90_days": 5.5,
+        "entry_count": 1000,
+        "exit_count": 820,
+        "error_rate": 0.08,
+        "rework_rate": 0.1,
+        "sla_target_days": 3.0,
+        "sla_met_pct": 0.81,
+        "bottleneck_severity": "low"
+      }
+    },
+    {
+      "name": "Underwriting",
+      "stage_key": "underwriting",
+      "order": 2,
+      "stage_type": "sequential",
+      "description": "Comprehensive credit analysis, financial spreading, risk assessment, and collateral evaluation. Underwriters review all supporting documents to determine creditworthiness and structure.",
+      "predecessors": [
+        "qualification_application"
+      ],
+      "successors": [
+        "proposal"
+      ],
+      "sla_target_days": 10.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__ClosingChecklist__c",
+          "role": "primary",
+          "relevant_fields": [
+            "Criteria__c",
+            "CCL_Auto_Spread_FormType__c",
+            "Approval_Roles__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Loan__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__AA_Loan_Officer_Recommendation__c",
+            "LLC_BI__APR__c",
+            "LLC_BI__Amount_Collected__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Collateral__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Collateral_Analysis_Narrative__c",
+            "LLC_BI__Acceptance_Date__c",
+            "LLC_BI__Base_Cost__c",
+            "LLC_BI__Asset_Description__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Legal_Entities__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Borrowers_Financial_Analysis__c",
+            "LLC_BI__Guarantor_Financial_Analysis__c",
+            "LLC_BI__Borrower_Analysis__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Requirement__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Advanced_Criteria__c",
+            "LLC_BI__Delta_Report__c",
+            "LLC_BI__Actual_Duration_Days__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 9.4,
+        "p50_days": 8.1,
+        "p90_days": 18.5,
+        "entry_count": 820,
+        "exit_count": 710,
+        "error_rate": 0.12,
+        "rework_rate": 0.18,
+        "sla_target_days": 10.0,
+        "sla_met_pct": 0.63,
+        "bottleneck_severity": "critical"
+      }
+    },
+    {
+      "name": "Proposal",
+      "stage_key": "proposal",
+      "order": 3,
+      "stage_type": "sequential",
+      "description": "Term sheet or letter of intent generation presenting proposed loan terms, conditions, fees, and covenants to the borrower for review and acceptance.",
+      "predecessors": [
+        "underwriting"
+      ],
+      "successors": [
+        "approval_loan_committee"
+      ],
+      "sla_target_days": 5.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__ClosingChecklist__c",
+          "role": "primary",
+          "relevant_fields": [
+            "Criteria__c",
+            "Approval_Roles__c",
+            "CCL_Auto_Spread_FormType__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Loan__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__APR__c",
+            "LLC_BI__Amortization__c",
+            "LLC_BI__Action_for_Loan__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Product__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Default_Interest_Rate__c",
+            "LLC_BI__Default_Loan_Term__c",
+            "LLC_BI__Default_Amortized_Term__c",
+            "LLC_BI__Classification__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__ProductCCL__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__lookupKey__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 4.2,
+        "p50_days": 3.5,
+        "p90_days": 8.0,
+        "entry_count": 710,
+        "exit_count": 655,
+        "error_rate": 0.07,
+        "rework_rate": 0.09,
+        "sla_target_days": 5.0,
+        "sla_met_pct": 0.78,
+        "bottleneck_severity": "medium"
+      }
+    },
+    {
+      "name": "Approval / Loan Committee",
+      "stage_key": "approval_loan_committee",
+      "order": 4,
+      "stage_type": "sequential",
+      "description": "Formal credit approval stage where the loan is reviewed and sanctioned by the loan committee or designated credit authority. Final terms are ratified and conditions precedent to closing are established.",
+      "predecessors": [
+        "proposal"
+      ],
+      "successors": [
+        "processing"
+      ],
+      "sla_target_days": 7.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__ClosingChecklist__c",
+          "role": "primary",
+          "relevant_fields": [
+            "Approval_Roles__c",
+            "Criteria__c",
+            "Attorney__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Loan__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__AA_Loan_Officer_Recommendation__c",
+            "LLC_BI__Action_for_Loan__c",
+            "LLC_BI__APR__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Requirement__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Action__c",
+            "LLC_BI__Assigned_Party__c",
+            "LLC_BI__Advanced_Criteria__c",
+            "LLC_BI__Days_until_Due_Date__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Covenant_Type__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Category__c",
+            "LLC_BI__Document_Sources__c",
+            "LLC_BI__Financial_Statement__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Collateral_Type_CCL__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__ClosingChecklist__c",
+            "LLC_BI__Collateral_Type__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 5.8,
+        "p50_days": 4.9,
+        "p90_days": 11.2,
+        "entry_count": 655,
+        "exit_count": 598,
+        "error_rate": 0.05,
+        "rework_rate": 0.07,
+        "sla_target_days": 7.0,
+        "sla_met_pct": 0.74,
+        "bottleneck_severity": "high"
+      }
+    },
+    {
+      "name": "Processing",
+      "stage_key": "processing",
+      "order": 5,
+      "stage_type": "sequential",
+      "description": "Post-approval loan processing including ordering title searches, appraisals, flood certifications, insurance verification, and collection of all outstanding conditions precedent required before document preparation.",
+      "predecessors": [
+        "approval_loan_committee"
+      ],
+      "successors": [
+        "doc_prep"
+      ],
+      "sla_target_days": 10.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__ClosingChecklist__c",
+          "role": "primary",
+          "relevant_fields": [
+            "Criteria__c",
+            "Approval_Roles__c",
+            "Attorney__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__ClosingDocument__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Approval_Date__c",
+            "LLC_BI__Portal_Upload_Date__c",
+            "LLC_BI__ownerGroup__c",
+            "LLC_BI__Portal_Doc_Type__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Collateral__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Delivery_Date__c",
+            "LLC_BI__Acceptance_Date__c",
+            "LLC_BI__Asset_Description__c",
+            "LLC_BI__Country__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Requirement__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Action__c",
+            "LLC_BI__Days_until_Due_Date__c",
+            "LLC_BI__Assigned_Party__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Valuation__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Status__c",
+            "LLC_BI__Type__c",
+            "LLC_BI__Start_Date__c",
+            "LLC_BI__Completed_Date__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 6.3,
+        "p50_days": 5.4,
+        "p90_days": 12.8,
+        "entry_count": 598,
+        "exit_count": 571,
+        "error_rate": 0.1,
+        "rework_rate": 0.13,
+        "sla_target_days": 7.0,
+        "sla_met_pct": 0.72,
+        "bottleneck_severity": "high"
+      }
+    },
+    {
+      "name": "Doc Prep",
+      "stage_key": "doc_prep",
+      "order": 6,
+      "stage_type": "sequential",
+      "description": "Preparation and generation of all loan closing documents including promissory notes, security agreements, deeds of trust, guaranties, and ancillary agreements based on approved terms and conditions.",
+      "predecessors": [
+        "processing"
+      ],
+      "successors": [
+        "doc_review"
+      ],
+      "sla_target_days": 5.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__ClosingChecklist__c",
+          "role": "primary",
+          "relevant_fields": [
+            "Document_ID_Mapping__c",
+            "Auto_E_Sign__c",
+            "Criteria__c",
+            "Approval_Roles__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__ClosingDocument__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Portal_Doc_Name__c",
+            "LLC_BI__Portal_Doc_Type__c",
+            "LLC_BI__ownerGroup__c",
+            "LLC_BI__Customer_Portal_Doc__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Document_Placeholder__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Auto_E_Sign__c",
+            "LLC_BI__Approval_Roles__c",
+            "LLC_BI__Description__c",
+            "LLC_BI__Content_Management_Key__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__DocuSign_Template__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Data_Mapping__c",
+            "LLC_BI__Filter__c",
+            "LLC_BI__Enforce_Masking__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__DocClass__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Description__c",
+            "LLC_BI__DocOwner__c",
+            "LLC_BI__lookupKey__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 3.1,
+        "p50_days": 2.6,
+        "p90_days": 6.4,
+        "entry_count": 571,
+        "exit_count": 554,
+        "error_rate": 0.09,
+        "rework_rate": 0.11,
+        "sla_target_days": 4.0,
+        "sla_met_pct": 0.82,
+        "bottleneck_severity": "medium"
+      }
+    },
+    {
+      "name": "Doc Review",
+      "stage_key": "doc_review",
+      "order": 7,
+      "stage_type": "sequential",
+      "description": "Legal and compliance review of all prepared closing documents by bank counsel, borrower counsel, and internal operations teams. Discrepancies are resolved and documents are finalized for execution.",
+      "predecessors": [
+        "doc_prep"
+      ],
+      "successors": [
+        "closing"
+      ],
+      "sla_target_days": 5.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__ClosingChecklist__c",
+          "role": "primary",
+          "relevant_fields": [
+            "Approval_Roles__c",
+            "Attorney__c",
+            "Auto_E_Sign__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__ClosingDocument__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Approval_Date__c",
+            "LLC_BI__ownerGroup__c",
+            "LLC_BI__Portal_Doc_Type__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__LLC_LoanDocument__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Approval_Roles__c",
+            "LLC_BI__Auto_E_Sign__c",
+            "LLC_BI__Document_Source__c",
+            "LLC_BI__Content_Management_Key__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__DocComment__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__comment__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__LLC_LoanDocComment__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__comment__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 2.4,
+        "p50_days": 1.9,
+        "p90_days": 5.1,
+        "entry_count": 554,
+        "exit_count": 541,
+        "error_rate": 0.11,
+        "rework_rate": 0.14,
+        "sla_target_days": 3.0,
+        "sla_met_pct": 0.85,
+        "bottleneck_severity": "medium"
+      }
+    },
+    {
+      "name": "Closing",
+      "stage_key": "closing",
+      "order": 8,
+      "stage_type": "sequential",
+      "description": "Formal loan closing event where all parties execute loan documents, funds are disbursed, collateral is perfected, and all closing conditions are satisfied. This is the primary milestone of the origination workflow.",
+      "predecessors": [
+        "doc_review"
+      ],
+      "successors": [
+        "booked"
+      ],
+      "sla_target_days": 3.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__ClosingChecklist__c",
+          "role": "primary",
+          "relevant_fields": [
+            "Approval_Roles__c",
+            "Auto_E_Sign__c",
+            "Attorney__c",
+            "Document_ID_Mapping__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__ClosingDocument__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Approval_Date__c",
+            "LLC_BI__Portal_Upload_Date__c",
+            "LLC_BI__ownerGroup__c",
+            "LLC_BI__Customer_Portal_Doc__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__LLC_LoanDocument__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Auto_E_Sign__c",
+            "LLC_BI__Document_Source__c",
+            "LLC_BI__Download_As_PDF__c",
+            "LLC_BI__Content_Management_Key__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Account_Collateral__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Collateral_Association__c",
+            "LLC_BI__Pledging_Authority__c",
+            "LLC_BI__Ownership_Percentage__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Loan__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Amount_Collected__c",
+            "LLC_BI__Action_for_Loan__c",
+            "LLC_BI__APR__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 1.8,
+        "p50_days": 1.4,
+        "p90_days": 3.6,
+        "entry_count": 541,
+        "exit_count": 532,
+        "error_rate": 0.04,
+        "rework_rate": 0.05,
+        "sla_target_days": 2.0,
+        "sla_met_pct": 0.91,
+        "bottleneck_severity": "low"
+      }
+    },
+    {
+      "name": "Booked",
+      "stage_key": "booked",
+      "order": 9,
+      "stage_type": "post_close",
+      "description": "Post-closing loan boarding stage where the executed loan is entered into the core banking system, payment schedules are established, and the loan transitions from origination to servicing.",
+      "predecessors": [
+        "closing"
+      ],
+      "successors": [
+        "complete"
+      ],
+      "sla_target_days": 3.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__ClosingChecklist__c",
+          "role": "primary",
+          "relevant_fields": [
+            "Criteria__c",
+            "Approval_Roles__c",
+            "CCL_Auto_Spread_FormType__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Loan__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Amount_Collected__c",
+            "LLC_BI__Action_for_Loan__c",
+            "LLC_BI__Amortization__c",
+            "LLC_BI__APR__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Checklist__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Context_Type__c",
+            "LLC_BI__Actual_Duration_Days__c",
+            "LLC_BI__Expected_Duration_Days__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Requirement__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Action__c",
+            "LLC_BI__Actual_Duration_Days__c",
+            "LLC_BI__Assigned_Party__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 0.5,
+        "p50_days": 0.3,
+        "p90_days": 1.1,
+        "entry_count": 532,
+        "exit_count": 532,
+        "error_rate": 0.02,
+        "rework_rate": 0.02,
+        "sla_target_days": 1.0,
+        "sla_met_pct": 0.97,
+        "bottleneck_severity": "none"
+      }
+    },
+    {
+      "name": "Complete",
+      "stage_key": "complete",
+      "order": 10,
+      "stage_type": "post_close",
+      "description": "Final closure of the origination checklist workflow confirming all post-close conditions, trailing documents, and follow-up items have been satisfied. The loan file is archived and fully transitioned to servicing.",
+      "predecessors": [
+        "booked"
+      ],
+      "successors": [],
+      "sla_target_days": 5.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__ClosingChecklist__c",
+          "role": "primary",
+          "relevant_fields": [
+            "Criteria__c",
+            "Approval_Roles__c",
+            "Attorney__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Checklist__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Actual_Duration_Days__c",
+            "LLC_BI__Expected_Duration_Days__c",
+            "LLC_BI__Category__c",
+            "LLC_BI__Context_Type__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Requirement__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Action__c",
+            "LLC_BI__Actual_Duration_Days__c",
+            "LLC_BI__Delta_Report__c",
+            "LLC_BI__Days_until_Due_Date__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Requirement_History__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Status__c",
+            "LLC_BI__Assignee__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Document_Placeholder__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__approvalDate__c",
+            "LLC_BI__Date__c",
+            "LLC_BI__Content_Management_Key__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 0.0,
+        "p50_days": 0.0,
+        "p90_days": 0.0,
+        "entry_count": 532,
+        "exit_count": 532,
+        "error_rate": 0.0,
+        "rework_rate": 0.0,
+        "sla_target_days": 1.0,
+        "sla_met_pct": 1.0,
+        "bottleneck_severity": "none"
+      }
+    }
+  ]
+}

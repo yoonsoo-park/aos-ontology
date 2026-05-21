@@ -1,0 +1,431 @@
+{
+  "name": "Deposit Origination",
+  "process_key": "deposit-origination",
+  "description": "End-to-end commercial deposit account origination and onboarding workflow.",
+  "domain": "deposit-origination",
+  "source_object": "LLC_BI__Deposit__c",
+  "stage_field": "LLC_BI__Stage__c",
+  "metrics_source": "synthetic",
+  "stages": [
+    {
+      "name": "Application",
+      "stage_key": "application",
+      "order": 1,
+      "stage_type": "sequential",
+      "description": "Initial deposit account application is created and customer information is being gathered. The relationship manager or banker captures prospect or customer details, account type preferences, and supporting documentation requirements.",
+      "predecessors": [],
+      "successors": [
+        "application_submitted"
+      ],
+      "sla_target_days": 2.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__Deposit__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Deposit_Account_Type_Custom__c",
+            "LLC_BI__Full_Product_Name__c",
+            "LLC_BI__Default_App__c",
+            "LLC_BI__Interested_in_Treasury_Services__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Application__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Application_Start_Date__c",
+            "LLC_BI__Application_Completion_Date_Time__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Legal_Entities__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Credit_Pull_Authorized_by_Customer__c",
+            "LLC_BI__Joint_Intent_Acknowledged_by_Customer__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Product__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Classification__c",
+            "LLC_BI__Default_Application__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Branch__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Branch_Id__c",
+            "LLC_BI__City__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 1.8,
+        "p50_days": 1.2,
+        "p90_days": 3.5,
+        "entry_count": 1000,
+        "exit_count": 970,
+        "error_rate": 0.08,
+        "rework_rate": 0.06,
+        "sla_target_days": 2.0,
+        "sla_met_pct": 0.91,
+        "bottleneck_severity": "low"
+      }
+    },
+    {
+      "name": "Application Submitted",
+      "stage_key": "application_submitted",
+      "order": 2,
+      "stage_type": "sequential",
+      "description": "The completed deposit application has been formally submitted by the applicant or relationship manager. All required fields and documentation have been provided and the application is queued for review and processing.",
+      "predecessors": [
+        "application"
+      ],
+      "successors": [
+        "processing"
+      ],
+      "sla_target_days": 1.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__Deposit__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Deposit_Account_Type_Custom__c",
+            "LLC_BI__Full_Product_Name__c",
+            "LLC_BI__Default_App__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Application__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Application_Completion_Date_Time__c",
+            "LLC_BI__Application_Start_Date__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Document_Placeholder__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__approvalDate__c",
+            "LLC_BI__Description__c",
+            "LLC_BI__Auto_E_Sign__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Deposit_Compliance__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Expect_to_originate_ACH_transfers__c",
+            "LLC_BI__Expected_monthly_cash_volume__c",
+            "LLC_BI__Expected_monthly_check_volume__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Product_Package__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Date_Deposits_Promised__c",
+            "LLC_BI__Date_Deposits_Delivered__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 3.4,
+        "p50_days": 2.8,
+        "p90_days": 6.5,
+        "entry_count": 970,
+        "exit_count": 890,
+        "error_rate": 0.12,
+        "rework_rate": 0.1,
+        "sla_target_days": 4.0,
+        "sla_met_pct": 0.78,
+        "bottleneck_severity": "high"
+      }
+    },
+    {
+      "name": "Processing",
+      "stage_key": "processing",
+      "order": 3,
+      "stage_type": "sequential",
+      "description": "The deposit application is under active review and processing by operations or new accounts staff. KYC/AML checks, identity verification, document validation, and compliance screenings are performed during this stage.",
+      "predecessors": [
+        "application_submitted"
+      ],
+      "successors": [
+        "booked",
+        "declined"
+      ],
+      "sla_target_days": 5.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__Deposit__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Deposit_Account_Type_Custom__c",
+            "LLC_BI__Full_Product_Name__c",
+            "LLC_BI__Different_Than_Mailing_Address__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Deposit_Compliance__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Expect_to_originate_ACH_transfers__c",
+            "LLC_BI__Expected_monthly_ACH_transfer_volume__c",
+            "LLC_BI__Expected_monthly_cash_volume__c",
+            "LLC_BI__Expected_monthly_check_volume__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Legal_Entities__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Credit_Pull_Authorized_by_Customer__c",
+            "LLC_BI__Joint_Intent_Acknowledged_by_Customer__c",
+            "LLC_BI__Borrower_Analysis__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Onboarding__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Stage__c",
+            "LLC_BI__Started_Date_Time__c",
+            "LLC_BI__Complete_Date_Time__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Document_Placeholder__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__approvalDate__c",
+            "LLC_BI__Approval_Roles__c",
+            "LLC_BI__Auto_E_Sign__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 9.7,
+        "p50_days": 8.1,
+        "p90_days": 18.5,
+        "entry_count": 890,
+        "exit_count": 780,
+        "error_rate": 0.18,
+        "rework_rate": 0.15,
+        "sla_target_days": 10.0,
+        "sla_met_pct": 0.61,
+        "bottleneck_severity": "critical"
+      }
+    },
+    {
+      "name": "Booked",
+      "stage_key": "booked",
+      "order": 4,
+      "stage_type": "sequential",
+      "description": "The deposit account has been approved and officially opened in the core banking system. Account numbers have been assigned, initial funding requirements have been met, and the account is now active and in good standing.",
+      "predecessors": [
+        "processing"
+      ],
+      "successors": [
+        "closed"
+      ],
+      "sla_target_days": 2.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__Deposit__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Full_Product_Name__c",
+            "LLC_BI__Deposit_Account_Type_Custom__c",
+            "LLC_BI__Amount_Charged_Off__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Opportunity_History__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Is_Booked__c",
+            "LLC_BI__Amount__c",
+            "LLC_BI__Start_Time__c",
+            "LLC_BI__Final_Stage_Change__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Funding_Method__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__ACH_ABA_Routing_Number__c",
+            "LLC_BI__ACH_Account_Number__c",
+            "LLC_BI__ACH_Bank_Name__c",
+            "LLC_BI__Check_Number__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Deposit_Rate_Structure__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Type__c",
+            "LLC_BI__Is_Template__c",
+            "LLC_BI__lookupKey__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Transaction_Request__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Amount_Funded__c",
+            "LLC_BI__Amount_Requested__c",
+            "LLC_BI__Amount__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Beneficiary__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Account_Type__c",
+            "LLC_BI__Designated_Beneficiary_Indicator__c",
+            "LLC_BI__Entity_Type__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 4.2,
+        "p50_days": 3.5,
+        "p90_days": 8.0,
+        "entry_count": 780,
+        "exit_count": 740,
+        "error_rate": 0.07,
+        "rework_rate": 0.05,
+        "sla_target_days": 5.0,
+        "sla_met_pct": 0.83,
+        "bottleneck_severity": "high"
+      }
+    },
+    {
+      "name": "Closed",
+      "stage_key": "closed",
+      "order": 5,
+      "stage_type": "post_close",
+      "description": "The deposit account has been closed. This may result from customer request, inactivity, account migration, or end-of-term maturity (e.g., CD maturity). All balances have been settled and the account is no longer active.",
+      "predecessors": [
+        "booked"
+      ],
+      "successors": [],
+      "sla_target_days": 3.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__Deposit__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Amount_Charged_Off__c",
+            "LLC_BI__Full_Product_Name__c",
+            "LLC_BI__Deposit_Account_Type_Custom__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Opportunity_History__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Final_Stage_Change__c",
+            "LLC_BI__End_Time__c",
+            "LLC_BI__Amount__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Transaction_Request__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Amount_Funded__c",
+            "LLC_BI__Amount__c",
+            "LLC_BI__CESA_Distribution_Type__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Profitability__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Average_Liabilities_for_Deposits__c",
+            "LLC_BI__Average_Earning_Assets__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 0.0,
+        "p50_days": 0.0,
+        "p90_days": 0.0,
+        "entry_count": 620,
+        "exit_count": 620,
+        "error_rate": 0.01,
+        "rework_rate": 0.01,
+        "sla_target_days": 1.0,
+        "sla_met_pct": 0.98,
+        "bottleneck_severity": "none"
+      }
+    },
+    {
+      "name": "Declined",
+      "stage_key": "declined",
+      "order": 6,
+      "stage_type": "post_close",
+      "description": "The deposit account application was reviewed and denied. Declination may be due to failed KYC/AML checks, compliance concerns, incomplete documentation, or credit risk factors. Adverse action notices are issued as required by regulation.",
+      "predecessors": [
+        "processing"
+      ],
+      "successors": [],
+      "sla_target_days": 2.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__Deposit__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Full_Product_Name__c",
+            "LLC_BI__Deposit_Account_Type_Custom__c",
+            "LLC_BI__Default_App__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Opportunity_History__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Final_Stage_Change__c",
+            "LLC_BI__End_Time__c",
+            "LLC_BI__Amount__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Deposit_Compliance__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Expect_to_originate_ACH_transfers__c",
+            "LLC_BI__Expected_monthly_cash_volume__c",
+            "LLC_BI__Expected_monthly_check_volume__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Legal_Entities__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Credit_Pull_Authorized_by_Customer__c",
+            "LLC_BI__Borrower_Analysis__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 0.0,
+        "p50_days": 0.0,
+        "p90_days": 0.0,
+        "entry_count": 120,
+        "exit_count": 120,
+        "error_rate": 0.02,
+        "rework_rate": 0.01,
+        "sla_target_days": 1.0,
+        "sla_met_pct": 0.96,
+        "bottleneck_severity": "none"
+      }
+    }
+  ]
+}

@@ -1,0 +1,452 @@
+{
+  "name": "Treasury Management Onboarding",
+  "process_key": "treasury-management-onboarding",
+  "description": "End-to-end commercial banking treasury management product onboarding workflow, from initial order entry through client setup completion.",
+  "domain": "treasury-management",
+  "source_object": "LLC_BI__Product_Package__c",
+  "stage_field": "cm_Stage_TM__c",
+  "metrics_source": "synthetic",
+  "stages": [
+    {
+      "name": "Onboarding / Order Entry",
+      "stage_key": "onboarding_order_entry",
+      "order": 1,
+      "stage_type": "sequential",
+      "description": "Initial capture of treasury management product request, client intake, and order entry into the system. Sales or relationship manager submits product package details and client information to begin the onboarding process.",
+      "predecessors": [],
+      "successors": [
+        "approval"
+      ],
+      "sla_target_days": 2.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__Product_Package__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Date_Deposits_Promised__c",
+            "LLC_BI__Actions_Under_Consideration_Narrative__c",
+            "LLC_BI__Date_Treasury_Maintenance_Submitted__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Application__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Application_Start_Date__c",
+            "LLC_BI__Application_Completion_Date_Time__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Treasury_Service__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__ACH_Credit_Daily_Limit__c",
+            "LLC_BI__ACH_Debit_Daily_Limit__c",
+            "LLC_BI__ACH_Default_Decision__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Deposit__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Interested_in_Treasury_Services__c",
+            "LLC_BI__Full_Product_Name__c",
+            "LLC_BI__Deposit_Account_Type_Custom__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Onboarding__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Stage__c",
+            "LLC_BI__Started_Date_Time__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 2.1,
+        "p50_days": 1.8,
+        "p90_days": 4.5,
+        "entry_count": 1000,
+        "exit_count": 972,
+        "error_rate": 0.12,
+        "rework_rate": 0.09,
+        "sla_target_days": 3.0,
+        "sla_met_pct": 0.84,
+        "bottleneck_severity": "low"
+      }
+    },
+    {
+      "name": "Approval",
+      "stage_key": "approval",
+      "order": 2,
+      "stage_type": "sequential",
+      "description": "Internal review and approval of the treasury management product package request. May include credit risk review, compliance checks, and management sign-off to authorize proceeding with the client onboarding.",
+      "predecessors": [
+        "onboarding_order_entry"
+      ],
+      "successors": [
+        "doc_prep"
+      ],
+      "sla_target_days": 3.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__Product_Package__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Actions_Under_Consideration_Narrative__c",
+            "LLC_BI__Date_Treasury_Maintenance_Submitted__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Review__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Review_Type__c",
+            "LLC_BI__Narrative__c",
+            "LLC_BI__Product_Package_Data__c",
+            "LLC_BI__Context_Key__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Credit_Memo__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Is_Template__c",
+            "LLC_BI__Is_Disabled__c",
+            "LLC_BI__Description__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Checklist__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Category__c",
+            "LLC_BI__Expected_Duration_Days__c",
+            "LLC_BI__Actual_Duration_Days__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Requirement_Context__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Business_Process_Key__c",
+            "LLC_BI__Is_Excluded_From_Auto_Generation__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 5.8,
+        "p50_days": 4.5,
+        "p90_days": 11.2,
+        "entry_count": 972,
+        "exit_count": 921,
+        "error_rate": 0.08,
+        "rework_rate": 0.14,
+        "sla_target_days": 5.0,
+        "sla_met_pct": 0.61,
+        "bottleneck_severity": "critical"
+      }
+    },
+    {
+      "name": "Doc Prep",
+      "stage_key": "doc_prep",
+      "order": 3,
+      "stage_type": "sequential",
+      "description": "Preparation of treasury management service agreements, enrollment forms, and legal documentation required for the client to authorize the requested products and services. Documents are generated, reviewed, and sent to the client for execution.",
+      "predecessors": [
+        "approval"
+      ],
+      "successors": [
+        "setup"
+      ],
+      "sla_target_days": 5.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__Product_Package__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Actions_Under_Consideration_Narrative__c",
+            "LLC_BI__Date_Deposits_Promised__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Checklist__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Category__c",
+            "LLC_BI__Expected_Duration_Days__c",
+            "LLC_BI__Actual_Duration_Days__c",
+            "LLC_BI__Context_Type__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Treasury_Service__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__ACH_File__c",
+            "LLC_BI__ACH_Default_Decision__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Product_Change_Detail__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Category__c",
+            "LLC_BI__Change_Status__c",
+            "LLC_BI__Date_Maintenance_Submitted__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Onboarding__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Stage__c",
+            "LLC_BI__Started_Date_Time__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 3.4,
+        "p50_days": 2.9,
+        "p90_days": 7.1,
+        "entry_count": 921,
+        "exit_count": 898,
+        "error_rate": 0.15,
+        "rework_rate": 0.18,
+        "sla_target_days": 4.0,
+        "sla_met_pct": 0.76,
+        "bottleneck_severity": "high"
+      }
+    },
+    {
+      "name": "Setup",
+      "stage_key": "setup",
+      "order": 4,
+      "stage_type": "sequential",
+      "description": "Technical configuration and system setup of treasury management products on the bank's core and ancillary platforms. Includes account provisioning, service entitlements, user access configuration, and connectivity setup (e.g., ACH, wire, positive pay, online banking).",
+      "predecessors": [
+        "doc_prep"
+      ],
+      "successors": [
+        "implementation_training"
+      ],
+      "sla_target_days": 7.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__Product_Package__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Date_Treasury_Maintenance_Submitted__c",
+            "LLC_BI__Date_Treasury_Maintenance_Completed__c",
+            "LLC_BI__Days_to_Complete_Treasury_Maintenance__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Treasury_Service__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__ACH_Credit_Daily_Limit__c",
+            "LLC_BI__ACH_Debit_Daily_Limit__c",
+            "LLC_BI__ACH_File__c",
+            "LLC_BI__ACH_Default_Decision__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Automated_Clearing_House_Service__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__ACH_Block__c",
+            "LLC_BI__ACH_Filter__c",
+            "LLC_BI__EDI_Reporting_Format__c",
+            "LLC_BI__EDI_Reporting_Type__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Cash_Service__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Controlled_Disbursement__c",
+            "LLC_BI__Full_Positive_Pay__c",
+            "LLC_BI__Partial_Positive_Pay__c",
+            "LLC_BI__Reverse_Positive_Pay__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Analyzed_Account__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__ACH_Company_Name__c",
+            "LLC_BI__ACH_Originator_ID__c",
+            "LLC_BI__Account_Transfer_Dual_Control__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Product_Change_Detail__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Change_Status__c",
+            "LLC_BI__Date_Maintenance_Submitted__c",
+            "LLC_BI__Date_Maintenance_Completed__c",
+            "LLC_BI__Days_Since_Created__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 4.2,
+        "p50_days": 3.6,
+        "p90_days": 8.4,
+        "entry_count": 898,
+        "exit_count": 881,
+        "error_rate": 0.1,
+        "rework_rate": 0.11,
+        "sla_target_days": 5.0,
+        "sla_met_pct": 0.79,
+        "bottleneck_severity": "high"
+      }
+    },
+    {
+      "name": "Implementation / Training",
+      "stage_key": "implementation_training",
+      "order": 5,
+      "stage_type": "sequential",
+      "description": "Client-facing implementation activities including onsite or virtual training, user enrollment, testing of connectivity and transactions, and client education on treasury management tools and workflows. Ensures the client is operationally ready to use the services.",
+      "predecessors": [
+        "setup"
+      ],
+      "successors": [
+        "setup_complete"
+      ],
+      "sla_target_days": 5.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__Product_Package__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Date_Deposits_Delivered__c",
+            "LLC_BI__Date_Treasury_Maintenance_Completed__c",
+            "LLC_BI__Days_to_Complete_Treasury_Maintenance__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Treasury_Service__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__ACH_Credit_Daily_Limit__c",
+            "LLC_BI__ACH_Debit_Daily_Limit__c",
+            "LLC_BI__ACH_Default_Decision__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Authorized_User__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Administrator__c",
+            "LLC_BI__Authorized_Signer__c",
+            "LLC_BI__Daily_Limit__c",
+            "LLC_BI__Dual_Control_Roles__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Checklist__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Category__c",
+            "LLC_BI__Actual_Duration_Days__c",
+            "LLC_BI__Expected_Duration_Days__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Onboarding__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Stage__c",
+            "LLC_BI__Complete_Date_Time__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 6.5,
+        "p50_days": 5.8,
+        "p90_days": 12.0,
+        "entry_count": 881,
+        "exit_count": 864,
+        "error_rate": 0.06,
+        "rework_rate": 0.07,
+        "sla_target_days": 10.0,
+        "sla_met_pct": 0.88,
+        "bottleneck_severity": "medium"
+      }
+    },
+    {
+      "name": "Setup Complete",
+      "stage_key": "setup_complete",
+      "order": 6,
+      "stage_type": "post_close",
+      "description": "Final confirmation that all treasury management products and services have been fully configured, tested, and the client has been trained and is actively using the services. Marks the end of the onboarding lifecycle and transitions the relationship to ongoing account management.",
+      "predecessors": [
+        "implementation_training"
+      ],
+      "successors": [],
+      "sla_target_days": 1.0,
+      "involved_entities": [
+        {
+          "api_name": "LLC_BI__Product_Package__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Date_Treasury_Maintenance_Completed__c",
+            "LLC_BI__Days_to_Complete_Treasury_Maintenance__c",
+            "LLC_BI__Date_Deposits_Delivered__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Onboarding__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Stage__c",
+            "LLC_BI__Complete_Date_Time__c",
+            "LLC_BI__Closure_Reason__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Product_Change_Detail__c",
+          "role": "primary",
+          "relevant_fields": [
+            "LLC_BI__Change_Status__c",
+            "LLC_BI__Date_Maintenance_Completed__c",
+            "LLC_BI__Days_Since_Created__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Treasury_Service__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__ACH_Default_Decision__c",
+            "LLC_BI__ACH_File__c"
+          ]
+        },
+        {
+          "api_name": "LLC_BI__Opportunity_History__c",
+          "role": "reference",
+          "relevant_fields": [
+            "LLC_BI__Is_Booked__c",
+            "LLC_BI__Final_Stage_Change__c",
+            "LLC_BI__End_Time__c"
+          ]
+        }
+      ],
+      "synthetic_metrics": {
+        "avg_days": 0.0,
+        "p50_days": 0.0,
+        "p90_days": 0.0,
+        "entry_count": 864,
+        "exit_count": 864,
+        "error_rate": 0.0,
+        "rework_rate": 0.0,
+        "sla_target_days": 0.0,
+        "sla_met_pct": 1.0,
+        "bottleneck_severity": "none"
+      }
+    }
+  ]
+}
