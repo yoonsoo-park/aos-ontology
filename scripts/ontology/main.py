@@ -94,6 +94,12 @@ def main() -> None:
         default=None,
         help="Save generated process config(s) to directory for review",
     )
+    parser.add_argument(
+        "--enrich",
+        type=str,
+        default=None,
+        help="Comma-separated enricher names (e.g., description,constraints,picklists)",
+    )
     args = parser.parse_args()
 
     if not args.metadata_root.exists():
@@ -140,7 +146,18 @@ def main() -> None:
         vault_config.save(args.save_config)
         print(f"Config saved to: {args.save_config}")
 
-    stats = write_vault(objects, args.output, vault_config)
+    enrichment_map = None
+    if args.enrich:
+        from .enrichers import get_enrichers, run_enrichers
+
+        enricher_names = [n.strip() for n in args.enrich.split(",")]
+        enrichers = get_enrichers(enricher_names)
+        print(f"\nRunning enrichers: {', '.join(enricher_names)}")
+        enrichment_map = run_enrichers(objects, enrichers, vault_config)
+        enriched_count = len(enrichment_map)
+        print(f"  Enriched {enriched_count} entities")
+
+    stats = write_vault(objects, args.output, vault_config, enrichment_map)
     print(f"\nVault generated at: {args.output}")
     print(f"  Entities: {stats['entities']}")
     print(f"  Domains: {stats['domains']}")

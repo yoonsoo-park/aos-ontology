@@ -125,7 +125,8 @@ for _tier, _objects in OBJECT_TIERS.items():
 
 
 def generate_entity_note(obj: SFObject, objects: dict[str, SFObject],
-                         vault_config: VaultConfig | None = None) -> str:
+                         vault_config: VaultConfig | None = None,
+                         enrichments: dict[str, any] | None = None) -> str:
     if vault_config:
         domain = vault_config.domain_mapping.get(obj.api_name, "uncategorized")
         tier = vault_config.tier_ranking.get(obj.api_name, 0)
@@ -149,6 +150,8 @@ def generate_entity_note(obj: SFObject, objects: dict[str, SFObject],
         frontmatter["record_types"] = obj.record_types
     if key_fields:
         frontmatter["key_fields"] = key_fields
+    if enrichments:
+        frontmatter.update(enrichments)
     frontmatter["generated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     fm_str = _yaml_dump_simple(frontmatter)
@@ -248,7 +251,8 @@ def generate_index(objects: dict[str, SFObject],
 
 
 def write_vault(objects: dict[str, SFObject], output_dir: Path,
-                vault_config: VaultConfig | None = None) -> dict[str, int]:
+                vault_config: VaultConfig | None = None,
+                enrichment_map: dict[str, dict[str, any]] | None = None) -> dict[str, int]:
     dm = vault_config.domain_mapping if vault_config else DOMAIN_MAPPING
     tr = vault_config.tier_ranking if vault_config else _TIER_LOOKUP
 
@@ -266,7 +270,8 @@ def write_vault(objects: dict[str, SFObject], output_dir: Path,
     stats = {"entities": 0, "domains": 0}
 
     for obj in objects.values():
-        note = generate_entity_note(obj, objects, vault_config)
+        obj_enrichments = enrichment_map.get(obj.api_name) if enrichment_map else None
+        note = generate_entity_note(obj, objects, vault_config, obj_enrichments)
         filepath = entities_dir / f"{obj.clean_label}.md"
         filepath.write_text(note, encoding="utf-8")
         stats["entities"] += 1
