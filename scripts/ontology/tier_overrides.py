@@ -50,6 +50,7 @@ FORCE_T1: list[str] = [
     "LLC_BI__Classification__c",
     "LLC_BI__Branch__c",
     "LLC_BI__Product_Type__c",
+    "LLC_BI__Application__c",
 ]
 
 # --- Force-include in TIER 2 ------------------------------------------------
