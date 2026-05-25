@@ -48,6 +48,8 @@ FORCE_T1: list[str] = [
     "LLC_BI__Beneficial_Owner__c",      # NOT in metadata — keep until upstream adds
     "LLC_BI__Pricing_Stream__c",
     "LLC_BI__Classification__c",
+    "LLC_BI__Branch__c",
+    "LLC_BI__Product_Type__c",
 ]
 
 # --- Force-include in TIER 2 ------------------------------------------------
@@ -141,10 +143,12 @@ FORCE_T2: list[str] = [
     "LLC_BI__DocClass__c",
     "LLC_BI__Analyzed_Account__c",
     "LLC_BI__Profitability__c",
-    "LLC_BI__Branch__c",
-    "LLC_BI__Product_Type__c",
     "LLC_BI__DocManager__c",
     "LLC_BI__Pricing_Option__c",
+    "LLC_BI__Covenant2__c",
+    "LLC_BI__ClosingChecklist__c",
+    "Opportunity",
+    "LLC_BI__Spread_Statement_Record__c",
 ]
 
 # --- Force-exclude from all tiers -------------------------------------------

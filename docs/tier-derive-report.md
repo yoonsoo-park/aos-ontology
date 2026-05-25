@@ -3,36 +3,29 @@
 - manifest objects: 243
 - metadata objects parsed: 615
 - candidates after Pass 1: 307
-- T1 size: 28, T2 size: 80, T3 size: 205
+- T1 size: 28, T2 size: 81, T3 size: 204
 
 ## Recall vs hardcoded
 
 | metric | value |
 |---|---|
-| T1 recall | 92.9% |
-| T2 recall | 95.1% |
-| T1+T2 recall | 98.2% |
+| T1 recall | 96.4% |
+| T2 recall | 98.8% |
+| T1+T2 recall | 100.0% |
 
-## Missing from auto-derived (in baseline T1, not in derived T1) — 2
+## Missing from auto-derived (in baseline T1, not in derived T1) — 1
 
-- LLC_BI__Branch__c
-- LLC_BI__Product_Type__c
+- LLC_BI__Application__c
 
-## Missing from auto-derived T2 — 4
+## Missing from auto-derived T2 — 1
 
-- LLC_BI__Spread_Statement_Period__c
 - LLC_BI__Treasury_Service__c
-- LLC_BI__Covenant2__c
-- LLC_BI__ClosingChecklist__c
 
-## Missing from T1+T2 combined — 2
+## Missing from T1+T2 combined — 0
 
-- LLC_BI__Covenant2__c
-- LLC_BI__ClosingChecklist__c
 
-## Extras (auto-derived but not in baseline) — 1
+## Extras (auto-derived but not in baseline) — 0
 
-- LLC_BI__Underwriting_Bundle__c
 
 ## Top 30 derived T1 with scores
 

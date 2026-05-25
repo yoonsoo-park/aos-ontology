@@ -30,7 +30,7 @@ INFRA_EXCLUDE: frozenset[str] = frozenset(
 )
 
 TIER_1_SIZE = 28
-TIER_2_SIZE = 80
+TIER_2_SIZE = 81  # matches current baseline (config.OBJECT_TIERS[2])
 
 # Pass 1 inclusion thresholds
 STD_IN_DEGREE_MIN = 5
